@@ -5,7 +5,7 @@ Welcome to my collection of guides and cheat sheets! This repository offers a va
 ## Table of Contents
 
 - [Development Tools](/[01]-devtools/)
-- [Frameworks](/[02]-frameworks/)
+- [Languages & Frameworks](/[02]-l&f/)
 - [GenAI Resources](/[03]-genai/)
 - [Slides](/[04]-slides/)
 - [Interview Preparation](/[05]-interview/)
