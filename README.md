@@ -1,4 +1,4 @@
-# GenAI Dev Resources
+# GenAI Resources
 
 Welcome to my collection of generative AI development resources and guides! This repository offers a variety of reference materials for quick access on AI technologies, development tools, and related frameworks. Explore and utilize them as you see fit.
 
