@@ -1,16 +1,18 @@
-# GenAI Resources
+# Generative AI Resources
 
-This repository collects guides and cheat sheets for generative AI development.
+A curated collection of guides, cheat sheets, and resources for generative AI development and career preparation.
 
-## Contents
+## Table of Contents
 
-- [Development Tools](./[01]-devtools/) – Tools for building AI applications.
-- [Languages & Frameworks](./[02]-l&f/) – Languages and frameworks used in AI.
-- [GenAI Resources](./[03]-genai/) – References specific to generative AI.
-- [Presentation Slides](./[04]-slides/) – Slide decks for learning.
-- [Interview Preparation](./[05]-interview/) – Prep materials for AI interviews.
-- [Certification Resources](./[06]-certifications/) – Guides for certification exams.
+This repository is organized into the following sections:
+
+- [01_programming](./01_programming/) - Core programming languages and frameworks.
+- [02_development_tools](./02_development_tools/) - Essential tools for the development workflow, including Git and Docker.
+- [03_generative_ai](./03_generative_ai/) - In-depth resources, papers, and guides on generative AI topics.
+- [04_presentations](./04_presentations/) - Slide decks and presentation materials on various technical subjects.
+- [05_certifications](./05_certifications/) - Study guides and materials for professional certifications.
+- [06_interview_prep](./06_interview_prep/) - Resources and tips for technical interview preparation.
 
 ## Acknowledgments
 
-Thanks to the open source community for these resources.
+This collection is made possible by the contributions of the open-source community.
