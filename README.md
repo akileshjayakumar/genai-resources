@@ -1,18 +1,56 @@
-# Generative AI Resources
+# GenAI Resources Library
 
-A curated collection of guides, cheat sheets, and resources for generative AI development and career preparation.
+Curated PDFs for learning software engineering, generative AI, tools, certifications, and interview prep.
 
-## Table of Contents
+## Quick Start
 
-This repository is organized into the following sections:
+### Prerequisites
+- Git
+- A PDF reader
 
-- [01_programming](./01_programming/) - Core programming languages and frameworks.
-- [02_development_tools](./02_development_tools/) - Essential tools for the development workflow, including Git and Docker.
-- [03_generative_ai](./03_generative_ai/) - In-depth resources, papers, and guides on generative AI topics.
-- [04_presentations](./04_presentations/) - Slide decks and presentation materials on various technical subjects.
-- [05_certifications](./05_certifications/) - Study guides and materials for professional certifications.
-- [06_interview_prep](./06_interview_prep/) - Resources and tips for technical interview preparation.
+### Clone
+```bash
+git clone https://github.com/akileshjayakumar/daily-genai-guides.git
+cd daily-genai-guides
+```
 
-## Acknowledgments
+### Browse by Topic
+```bash
+ls -1
+ls -1 03_generative_ai
+```
 
-This collection is made possible by the contributions of the open-source community.
+### Open a Resource (macOS)
+```bash
+open 03_generative_ai/openai/OpenAI_gpt_5_prompting_guide.pdf
+```
+
+## Core Sections
+- `01_programming`: language and framework guides.
+- `02_development_tools`: Git, Docker, markdown, and productivity references.
+- `03_generative_ai`: vendor guides, papers, and practical GenAI playbooks.
+- `04_presentations`: presentation decks across DS, BI, fintech, cyber, and LLM topics.
+- `05_certifications`: exam guides and certification prep.
+- `06_interview_prep`: technical interview study materials.
+
+## Configuration
+No environment variables are required.
+
+## Usage Example
+Find all OpenAI resources:
+```bash
+find 03_generative_ai/openai -type f -name "*.pdf" | sort
+```
+
+## Contributing and Validation
+1. Add files in the most specific existing folder.
+2. Use clear, descriptive filenames.
+3. Verify links and paths in this README after changes.
+
+Quick check:
+```bash
+find . -type f -name "*.pdf" | wc -l
+```
+
+## License
+MIT (see `LICENSE`).
