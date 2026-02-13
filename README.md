@@ -16,11 +16,6 @@ cd genai-resources
 ## Configuration
 - No required environment variables are documented for basic usage.
 
-## Usage
-```bash
-ls -la
-```
-
 ## Contributing and Testing
 - Contributions are welcome through pull requests with clear, scoped changes.
 - No automated test suite is currently documented for this repository.
