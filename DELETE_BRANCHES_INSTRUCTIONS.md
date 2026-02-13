@@ -38,12 +38,12 @@ git pull origin main
 echo ""
 echo "Deleting local branches (except main)..."
 # Get all local branches except main and delete them
-git branch | grep -v "main" | grep -v "*" | xargs -r git branch -D
+git branch | grep -v "^[* ]*main$" | xargs -r git branch -D
 
 echo ""
 echo "Fetching remote branch list..."
 # Get all remote branches except main
-remote_branches=$(git ls-remote --heads origin | grep -v "refs/heads/main" | awk '{print $2}' | sed 's|refs/heads/||')
+remote_branches=$(git ls-remote --heads origin | grep -v "refs/heads/main$" | awk '{print $2}' | sed 's|refs/heads/||')
 
 if [ -z "$remote_branches" ]; then
     echo "No remote branches to delete (only main exists)."
