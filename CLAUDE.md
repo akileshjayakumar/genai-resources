@@ -21,5 +21,5 @@ Directories are numbered to enforce browsing order:
 
 - **Naming**: PDF files use `snake_case` descriptive names (e.g., `python_finance_libraries.pdf`, `AWS_ai_practitioner_exam_guide.pdf`). Vendor/platform prefixes are capitalized.
 - **Adding PDFs**: Place new files in the appropriate numbered category and subdirectory. Create a new subdirectory under an existing category if the topic doesn't fit existing ones.
-- **Commits**: Follow the pattern `docs: add new PDF on <topic>` or `docs: add multiple new PDF` for bulk additions.
+- **Commits**: Follow the pattern `docs: add new PDF on <topic>` or `docs: add multiple new PDFs` for bulk additions.
 - **License**: MIT
