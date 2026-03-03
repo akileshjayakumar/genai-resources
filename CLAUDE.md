@@ -12,7 +12,10 @@ Directories are numbered to enforce browsing order:
 
 - `01_programming/` — Language guides (Python, SQL, TypeScript, React) and framework references (FastAPI, API design), split into `languages/` and `frameworks/`
 - `02_development_tools/` — Git, Docker, VS Code, Markdown references (flat directory)
-- `03_generative_ai/` — Largest section; sub-categorized by provider/topic: `anthropic/`, `aws/`, `cursor/`, `deeplearning/`, `google/`, `guides_and_books/`, `langchain/`, `neo4j/`, `nvidia/`, `openai/`, `papers/`
+- `03_generative_ai/` — Largest section; sub-categorized by provider and topic:
+  - **By provider**: `anthropic/`, `aws/`, `cursor/`, `google/`, `langchain/`, `neo4j/`, `nvidia/`, `openai/`
+  - **By topic**: `agents/`, `deeplearning/`, `llm_fundamentals/`, `prompting/`, `rag/`, `papers/`
+  - **General**: `guides_and_books/` (catch-all for items that don't fit a specific topic)
 - `04_presentations/` — Slide decks across domains: `business_intelligence/`, `cyber/`, `ds/`, `fintech/`, `keynote/`, `llm/`, `test_prep/`
 - `05_certifications/` — AWS and GitHub exam guides (flat directory)
 - `06_interview_prep/` — Interview tips and LLM interview Q&A (flat directory)
@@ -21,5 +24,6 @@ Directories are numbered to enforce browsing order:
 
 - **Naming**: PDF files use `snake_case` descriptive names (e.g., `python_finance_libraries.pdf`, `AWS_ai_practitioner_exam_guide.pdf`). Vendor/platform prefixes are capitalized.
 - **Adding PDFs**: Place new files in the appropriate numbered category and subdirectory. Create a new subdirectory under an existing category if the topic doesn't fit existing ones.
+- **Index**: Run `python scripts/generate_index.py` after adding files to regenerate `INDEX.md`.
 - **Commits**: Follow the pattern `docs: add new PDF on <topic>` or `docs: add multiple new PDFs` for bulk additions.
 - **License**: MIT
