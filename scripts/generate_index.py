@@ -3,6 +3,7 @@
 
 from __future__ import annotations
 
+import json
 import os
 import re
 from pathlib import Path
@@ -19,75 +20,91 @@ CATEGORY_LABELS = {
     "06_interview_prep": "Interview Prep",
 }
 
-# Words that should remain lowercase in title case (unless first word)
-_LOWERCASE_WORDS = {
-    "a", "an", "the", "and", "but", "or", "for", "nor", "on", "at",
-    "to", "by", "in", "of", "up", "as", "vs", "via",
-}
+GITHUB_MODELS_URL = "https://models.inference.ai.azure.com"
+MODEL = "gpt-4o-mini"
 
-# Known vendor/product prefixes to preserve casing
-_VENDOR_PREFIXES = {
-    "aws", "openai", "google", "anthropic", "nvidia", "neo4j",
-    "langchain", "langgraph", "pytorch", "databricks", "mitre",
-    "tiktok", "pwc", "github",
-}
+_AI_LABELS: dict[str, str] | None = None  # populated once, lazily
 
-_VENDOR_DISPLAY = {
-    "aws": "AWS",
-    "openai": "OpenAI",
-    "google": "Google",
-    "anthropic": "Anthropic",
-    "nvidia": "NVIDIA",
-    "neo4j": "Neo4j",
-    "langchain": "LangChain",
-    "langgraph": "LangGraph",
-    "pytorch": "PyTorch",
-    "databricks": "Databricks",
-    "mitre": "MITRE",
-    "tiktok": "TikTok",
-    "pwc": "PwC",
-    "github": "GitHub",
-}
 
-# Common acronyms/initialisms to always uppercase
-_ACRONYMS = {
-    "ai", "ml", "llm", "api", "sql", "rag", "cag", "bi",
-    "ui", "ux", "cli", "ci", "cd", "url", "http", "pdf", "gpt",
-    "nlp", "cv", "qa", "kv", "rlhf", "lora",
-}
+def _build_ai_labels(stems: list[str]) -> dict[str, str]:
+    """Call GitHub Models once to get human-readable labels for all stems."""
+    token = os.environ.get("GITHUB_TOKEN")
+    if not token:
+        # Fallback: simple title-case with underscores replaced by spaces
+        return {s: s.replace("_", " ").title() for s in stems}
 
-# Words with specific mixed-case rendering
-_MIXED_CASE = {
-    "genai": "GenAI",
-    "llms": "LLMs",
-    "fastapi": "FastAPI",
-    "vscode": "VS Code",
-    "graphrag": "GraphRAG",
-    "insurtech": "InsurTech",
-    "deeplearning": "Deep Learning",
-    "ds": "Data Science",
-}
+    try:
+        from openai import OpenAI  # optional; present in CI, may be absent locally
+
+        client = OpenAI(base_url=GITHUB_MODELS_URL, api_key=token)
+
+        system_prompt = (
+            "You convert snake_case identifiers (PDF filenames and directory names) "
+            "into clean, human-readable display labels for a table-of-contents index.\n\n"
+            "Rules:\n"
+            "1. Proper title-case English — capitalize the first letter of each major word.\n"
+            "2. Keep small prepositions/conjunctions lowercase unless they start the label "
+            "(a, an, the, and, but, or, for, nor, on, at, to, by, in, of, up, as, vs, via).\n"
+            "3. Correct casing for well-known tech terms, acronyms, and trademarks "
+            "(e.g. AI, ML, LLM, RAG, API, SQL, BI, UI, UX, CLI, PDF, GPT, NLP, "
+            "AWS, OpenAI, Google, Anthropic, NVIDIA, Neo4j, LangChain, LangGraph, "
+            "PyTorch, Databricks, MITRE, TikTok, PwC, GitHub, GenAI, FastAPI, "
+            "VS Code, GraphRAG, InsurTech, FinTech).\n"
+            "4. Remove trailing numbers that are just counters (e.g. module_1 → Module 1 "
+            "is fine; but do NOT drop meaningful numbers like gpt_4 → GPT-4).\n"
+            "5. Respond ONLY with a JSON object mapping each input key to its label. "
+            "No commentary, no code block fences."
+        )
+
+        # Send in batches of 200 to stay within token limits
+        result: dict[str, str] = {}
+        batch_size = 200
+        for i in range(0, len(stems), batch_size):
+            batch = stems[i : i + batch_size]
+            user_msg = json.dumps(batch)
+            response = client.chat.completions.create(
+                model=MODEL,
+                messages=[
+                    {"role": "system", "content": system_prompt},
+                    {"role": "user", "content": user_msg},
+                ],
+                temperature=0.0,
+                max_tokens=2000,
+                response_format={"type": "json_object"},
+            )
+            raw = response.choices[0].message.content.strip()
+            result.update(json.loads(raw))
+
+        return result
+
+    except Exception as exc:
+        print(f"  [warn] AI label generation failed, using fallback: {exc}")
+        return {s: s.replace("_", " ").title() for s in stems}
+
+
+def _ensure_labels(stems: list[str]) -> None:
+    """Populate the global label cache for the given stems if not already done."""
+    global _AI_LABELS
+    if _AI_LABELS is None:
+        _AI_LABELS = {}
+    missing = [s for s in stems if s not in _AI_LABELS]
+    if missing:
+        _AI_LABELS.update(_build_ai_labels(missing))
 
 
 def human_name(filename: str) -> str:
-    """Convert snake_case filename to a clean, readable title."""
-    name = filename.replace(".pdf", "")
-    # Split on underscores
-    words = name.split("_")
-    result = []
-    for i, word in enumerate(words):
-        lower = word.lower()
-        if lower in _VENDOR_DISPLAY:
-            result.append(_VENDOR_DISPLAY[lower])
-        elif lower in _MIXED_CASE:
-            result.append(_MIXED_CASE[lower])
-        elif lower in _ACRONYMS:
-            result.append(lower.upper())
-        elif i > 0 and lower in _LOWERCASE_WORDS:
-            result.append(lower)
-        else:
-            result.append(word.capitalize())
-    return " ".join(result)
+    """Return AI-generated (or fallback) human-readable label for a PDF filename."""
+    stem = filename.removesuffix(".pdf")
+    _ensure_labels([stem])
+    assert _AI_LABELS is not None
+    return _AI_LABELS.get(stem, stem.replace("_", " ").title())
+
+
+def subdir_label(name: str) -> str:
+    """Return AI-generated (or fallback) human-readable label for a subdirectory."""
+    _ensure_labels([name])
+    assert _AI_LABELS is not None
+    return _AI_LABELS.get(name, name.replace("_", " ").title())
 
 
 def collect_pdfs() -> dict[str, list[Path]]:
@@ -104,15 +121,28 @@ def collect_pdfs() -> dict[str, list[Path]]:
 
 
 def generate_index() -> str:
+    categories = collect_pdfs()
+    total = sum(len(v) for v in categories.values())
+
+    # Collect all stems that need labels so we can do one batch AI call
+    all_stems: list[str] = []
+    for pdfs in categories.values():
+        for p in pdfs:
+            all_stems.append(p.stem)
+        # subdirectory names
+        for p in pdfs:
+            parts = p.parts
+            if len(parts) > 2:
+                all_stems.append(parts[1])
+    _ensure_labels(list(dict.fromkeys(all_stems)))  # deduplicated, order-preserving
+
     lines = [
         "# Full Index",
         "",
         "_Auto-generated by `scripts/generate_index.py`. Do not edit manually._",
         "",
+        f"**{total} PDFs** across {len(categories)} categories.\n",
     ]
-    categories = collect_pdfs()
-    total = sum(len(v) for v in categories.values())
-    lines.append(f"**{total} PDFs** across {len(categories)} categories.\n")
 
     for cat, pdfs in categories.items():
         label = CATEGORY_LABELS.get(cat, cat)
@@ -128,18 +158,7 @@ def generate_index() -> str:
         for subdir in sorted(subdirs.keys()):
             sub_pdfs = subdirs[subdir]
             if subdir:
-                heading_words = []
-                for w in subdir.split("_"):
-                    lower = w.lower()
-                    if lower in _VENDOR_DISPLAY:
-                        heading_words.append(_VENDOR_DISPLAY[lower])
-                    elif lower in _MIXED_CASE:
-                        heading_words.append(_MIXED_CASE[lower])
-                    elif lower in _ACRONYMS:
-                        heading_words.append(lower.upper())
-                    else:
-                        heading_words.append(w.capitalize())
-                lines.append(f"### {' '.join(heading_words)}\n")
+                lines.append(f"### {subdir_label(subdir)}\n")
             for pdf in sorted(sub_pdfs):
                 name = human_name(pdf.name)
                 link = str(pdf).replace(" ", "%20")

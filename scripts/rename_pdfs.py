@@ -27,29 +27,38 @@ SYSTEM_PROMPT = """\
 You are a file-naming assistant for a curated GenAI and tech PDF resource \
 library hosted on GitHub.
 
-Given a PDF's metadata and first-page text, output a single clean filename \
-(without the .pdf extension) following these rules exactly:
+You will receive the content extracted from multiple pages of a PDF. \
+Read it carefully to understand what the document is actually about — \
+its topic, subject matter, and purpose — then output a single clean filename \
+(without the .pdf extension) that reflects the true content.
 
 RULES:
 1. snake_case — lowercase words joined by underscores.
-2. Capitalize vendor/platform prefixes when the PDF is clearly produced by
-   that vendor, used as the FIRST token only:
+2. Capitalize vendor/platform prefixes ONLY when the PDF is clearly produced
+   by that vendor AND the vendor name should appear as the first token:
      AWS_  OpenAI_  Google_  Anthropic_  NVIDIA_  Neo4j_  LangChain_
      LangGraph_  PyTorch_  Databricks_  MITRE_  TikTok_  PwC_  GitHub_
-3. Descriptive and concise — 3 to 7 words capturing the core subject.
-4. Include version or year only when it meaningfully distinguishes the file
+3. Descriptive and concise — 3 to 7 words capturing the core TOPIC/SUBJECT,
+   not the author's name, course code, module number, or institution.
+4. Name the CONTENT, not the packaging — "fintech_payments_and_blockchain"
+   is better than "fintech_sarin_module_2"; "insurtech_risk_and_data_models"
+   is better than "fintech_geczy_insurtech_slides".
+5. Include version or year only when it meaningfully distinguishes the file
    (e.g. gpt_4_1, flash_attention_2, prompting_guide_2024_04).
-5. No special characters other than underscores.
-6. Omit filler: "the", "a", "an", "of", "document", "file", "pdf".
+6. No special characters other than underscores.
+7. Omit filler: "the", "a", "an", "of", "document", "file", "pdf",
+   "slides", "presentation", "module", "lecture", "overview" (unless truly
+   the only useful descriptor).
 
 GOOD EXAMPLES:
-  aws_bedrock_whitepaper_2025
+  aws_bedrock_rag_architecture
   OpenAI_practical_guide_to_building_agents
   attention_is_all_you_need
-  python_finance_libraries
-  rag_mastering_guide
+  fintech_payments_and_blockchain_overview
+  fintech_lending_credit_risk_models
+  insurtech_ai_risk_pricing
+  real_estate_proptech_platforms
   Google_prompting_guide_101_2024_04
-  react_hooks_guide
   llm_system_design_guide
   Neo4j_developers_guide_to_graphrag
 
@@ -58,7 +67,7 @@ Respond with ONLY the filename — no extension, no punctuation, no explanation.
 
 
 def extract_pdf_info(path: Path) -> tuple[str, str]:
-    """Return (title_from_metadata, text_from_first_two_pages)."""
+    """Return (title_from_metadata, text_from_first_eight_pages)."""
     title = ""
     text = ""
     try:
@@ -66,7 +75,7 @@ def extract_pdf_info(path: Path) -> tuple[str, str]:
         meta = reader.metadata
         if meta and getattr(meta, "title", None):
             title = (meta.title or "").strip()
-        pages_to_read = min(2, len(reader.pages))
+        pages_to_read = min(8, len(reader.pages))
         for i in range(pages_to_read):
             text += (reader.pages[i].extract_text() or "") + "\n"
     except Exception as exc:
@@ -89,7 +98,7 @@ def suggest_filename(path: Path, client: OpenAI) -> str:
         f"Category directory: {category}\n"
         f"Current filename: {path.name}\n"
         f"PDF title metadata: {title[:300] if title else 'N/A'}\n"
-        f"First pages text (truncated to 800 chars):\n{text[:800] if text else 'N/A'}"
+        f"First pages text (truncated to 3000 chars):\n{text[:3000] if text else 'N/A'}"
     )
 
     try:
@@ -100,7 +109,7 @@ def suggest_filename(path: Path, client: OpenAI) -> str:
                 {"role": "user", "content": user_msg},
             ],
             temperature=0.1,
-            max_tokens=60,
+            max_tokens=80,
         )
         raw = response.choices[0].message.content.strip()
         # Sanitize: allow only alphanumeric and underscores
