@@ -45,8 +45,6 @@
 3. Once merged to `main`, CI auto-renames it to a clean snake_case name using AI and regenerates the index
 4. No API keys needed; everything runs on the built-in `GITHUB_TOKEN`
 
-To regenerate the index manually: `python scripts/generate_index.py`
-
 ---
 
 ## License
