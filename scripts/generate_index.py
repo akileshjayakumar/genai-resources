@@ -23,7 +23,8 @@ CATEGORY_LABELS = {
 GITHUB_MODELS_URL = "https://models.inference.ai.azure.com"
 MODEL = "gpt-4o-mini"
 
-_AI_LABELS: dict[str, str] | None = None  # populated once, lazily
+# Label cache — populated once by _ensure_labels(), never None.
+_AI_LABELS: dict[str, str] = {}
 
 
 def _build_ai_labels(stems: list[str]) -> dict[str, str]:
@@ -49,9 +50,9 @@ def _build_ai_labels(stems: list[str]) -> dict[str, str]:
             "(e.g. AI, ML, LLM, RAG, API, SQL, BI, UI, UX, CLI, PDF, GPT, NLP, "
             "AWS, OpenAI, Google, Anthropic, NVIDIA, Neo4j, LangChain, LangGraph, "
             "PyTorch, Databricks, MITRE, TikTok, PwC, GitHub, GenAI, FastAPI, "
-            "VS Code, GraphRAG, InsurTech, FinTech).\n"
-            "4. Remove trailing numbers that are just counters (e.g. module_1 → Module 1 "
-            "is fine; but do NOT drop meaningful numbers like gpt_4 → GPT-4).\n"
+            "VS Code, GraphRAG, InsurTech, FinTech, MongoDB, ChatGPT, Perplexity, "
+            "SAA-C03, multimodal).\n"
+            "4. Preserve meaningful numbers (GPT-4, SAA-C03, Flash Attention 2).\n"
             "5. Respond ONLY with a JSON object mapping each input key to its label. "
             "No commentary, no code block fences."
         )
@@ -83,10 +84,7 @@ def _build_ai_labels(stems: list[str]) -> dict[str, str]:
 
 
 def _ensure_labels(stems: list[str]) -> None:
-    """Populate the global label cache for the given stems if not already done."""
-    global _AI_LABELS
-    if _AI_LABELS is None:
-        _AI_LABELS = {}
+    """Populate the global label cache for any stems not already present."""
     missing = [s for s in stems if s not in _AI_LABELS]
     if missing:
         _AI_LABELS.update(_build_ai_labels(missing))
@@ -96,14 +94,12 @@ def human_name(filename: str) -> str:
     """Return AI-generated (or fallback) human-readable label for a PDF filename."""
     stem = filename.removesuffix(".pdf")
     _ensure_labels([stem])
-    assert _AI_LABELS is not None
     return _AI_LABELS.get(stem, stem.replace("_", " ").title())
 
 
 def subdir_label(name: str) -> str:
     """Return AI-generated (or fallback) human-readable label for a subdirectory."""
     _ensure_labels([name])
-    assert _AI_LABELS is not None
     return _AI_LABELS.get(name, name.replace("_", " ").title())
 
 
@@ -120,21 +116,21 @@ def collect_pdfs() -> dict[str, list[Path]]:
     return dict(sorted(categories.items()))
 
 
-def generate_index() -> str:
+def generate_index() -> tuple[str, int]:
+    """Return (index_markdown, total_pdf_count)."""
     categories = collect_pdfs()
     total = sum(len(v) for v in categories.values())
 
-    # Collect all stems that need labels so we can do one batch AI call
+    # Collect all stems in one pass so we can make a single batched AI call
+    seen: set[str] = set()
     all_stems: list[str] = []
     for pdfs in categories.values():
         for p in pdfs:
-            all_stems.append(p.stem)
-        # subdirectory names
-        for p in pdfs:
-            parts = p.parts
-            if len(parts) > 2:
-                all_stems.append(parts[1])
-    _ensure_labels(list(dict.fromkeys(all_stems)))  # deduplicated, order-preserving
+            for token in (p.stem, p.parts[1] if len(p.parts) > 2 else None):
+                if token and token not in seen:
+                    all_stems.append(token)
+                    seen.add(token)
+    _ensure_labels(all_stems)
 
     lines = [
         "# Full Index",
@@ -165,28 +161,40 @@ def generate_index() -> str:
                 lines.append(f"- [{name}]({link})")
             lines.append("")
 
-    return "\n".join(lines)
+    return "\n".join(lines), total
 
 
 def update_readme_count(total: int) -> None:
-    """Patch the PDF count in README.md to keep it in sync."""
+    """Patch the PDF count in README.md to keep it in sync.
+
+    Targets the specific bold count line near the top of README.md.
+    Uses a sentinel comment <!-- PDF_COUNT --> if present, otherwise
+    falls back to the first bold '\\d+ PDFs' pattern.
+    """
     readme = REPO_ROOT / "README.md"
     text = readme.read_text()
-    updated = re.sub(
-        r"\d+ PDFs",
-        f"{total} PDFs",
-        text,
-        count=1,
-    )
+
+    # Try sentinel-anchored replacement first
+    sentinel_pattern = r"(<!-- PDF_COUNT -->.*?)\*\*\d+ PDFs\*\*"
+    if re.search(sentinel_pattern, text):
+        updated = re.sub(
+            sentinel_pattern,
+            rf"\g<1>**{total} PDFs**",
+            text,
+            count=1,
+        )
+    else:
+        # Fallback: first bold count in the file (the summary line)
+        updated = re.sub(r"\*\*\d+ PDFs\*\*", f"**{total} PDFs**", text, count=1)
+
     if updated != text:
         readme.write_text(updated)
         print(f"  README.md count updated to {total}")
 
 
 if __name__ == "__main__":
-    index = generate_index()
+    index, total = generate_index()
     out = REPO_ROOT / "INDEX.md"
     out.write_text(index)
-    total = sum(len(v) for v in collect_pdfs().values())
     update_readme_count(total)
     print(f"Generated {out} ({total} PDFs)")

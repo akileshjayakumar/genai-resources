@@ -112,9 +112,12 @@ def suggest_filename(path: Path, client: OpenAI) -> str:
             max_tokens=80,
         )
         raw = response.choices[0].message.content.strip()
-        # Sanitize: allow only alphanumeric and underscores
+        # Sanitize: allow only alphanumeric and underscores.
+        # This also neutralizes any path-traversal attempts (/ and . → _).
         clean = re.sub(r"[^a-zA-Z0-9_]", "_", raw)
         clean = re.sub(r"_+", "_", clean).strip("_")
+        # Cap length — max_tokens=80 already limits this, but be explicit.
+        clean = clean[:100]
         return clean
     except Exception as exc:
         print(f"  [warn] Model call failed for {path.name}: {exc}", file=sys.stderr)

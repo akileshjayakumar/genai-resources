@@ -34,8 +34,9 @@ jobs:
           if [ -n "$NEW_PDFS" ]; then
             echo "New PDFs detected:"
             echo "$NEW_PDFS"
-            # Pass each path as a separate argument (safe: snake_case has no spaces)
-            python scripts/rename_pdfs.py $NEW_PDFS
+            # Use mapfile to safely handle filenames that may contain spaces
+            mapfile -t NEW_PDF_ARRAY <<< "$NEW_PDFS"
+            python scripts/rename_pdfs.py "${NEW_PDF_ARRAY[@]}"
           else
             echo "No new PDFs in this push — skipping rename step."
           fi

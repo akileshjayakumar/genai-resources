@@ -1,7 +1,7 @@
 # AGENTS.md
 
 ## Overview
-Curated PDF resource library — **no source code, build system, tests, or CI/CD**. All content is categorized PDF files.
+Curated PDF resource library — **no application source code, build system, or test suite**. All content is categorized PDF files.
 
 ## Build / Lint / Test
 None. Run `python scripts/generate_index.py` after adding PDFs to regenerate `INDEX.md`.
