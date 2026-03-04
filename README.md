@@ -1,6 +1,6 @@
 # GenAI Resources
 
-**159 PDFs** covering generative AI, software engineering, cloud platforms, certifications, and interview prep.
+**158 PDFs** covering generative AI, software engineering, cloud platforms, certifications, and interview prep.
 
 > Browse the full catalog → [`INDEX.md`](INDEX.md)
 
