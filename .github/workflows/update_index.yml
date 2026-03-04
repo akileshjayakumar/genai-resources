@@ -8,6 +8,7 @@ on:
 
 jobs:
   update-index:
+    if: github.actor != 'github-actions[bot]'
     runs-on: ubuntu-latest
     permissions:
       contents: write
@@ -25,4 +26,4 @@ jobs:
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
-          git diff --quiet INDEX.md || (git add INDEX.md && git commit -m "docs: auto-update INDEX.md" && git push)
+          git diff --quiet INDEX.md README.md || (git add INDEX.md README.md && git commit -m "docs: auto-update INDEX.md" && git push)
