@@ -1,10 +1,18 @@
 # AGENTS.md
 
 ## Overview
-Curated PDF resource library — **no source code, build system, tests, or CI/CD**. All content is categorized PDF files.
+Curated PDF resource library — **no application source code, build system, or test suite**. All content is categorized PDF files.
 
 ## Build / Lint / Test
 None. Run `python scripts/generate_index.py` after adding PDFs to regenerate `INDEX.md`.
+
+## Automation (GitHub Actions)
+Merging a PDF into `main` (via pull request) triggers `.github/workflows/update_index.yml` which:
+1. **AI-renames** newly added PDFs using GitHub Models (`gpt-4o-mini` via `GITHUB_TOKEN`) to produce clean, readable snake_case filenames following the conventions below.
+2. **Regenerates** `INDEX.md` and patches the PDF count in `README.md`.
+3. **Commits** all changes back to `main` as `github-actions[bot]`.
+
+No API keys or secrets need to be configured — `GITHUB_TOKEN` is built into every Actions run.
 
 ## Repository Structure
 Numbered directories enforce browsing order:

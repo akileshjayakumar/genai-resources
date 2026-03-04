@@ -1,0 +1,23 @@
+# macOS
+**/.DS_Store
+.AppleDouble
+.LSOverride
+
+# Windows
+Thumbs.db
+ehthumbs.db
+Desktop.ini
+
+# Linux
+*~
+
+# Python
+__pycache__/
+*.py[cod]
+*.pyo
+
+# Editor directories
+.vscode/
+.idea/
+*.swp
+*.swo

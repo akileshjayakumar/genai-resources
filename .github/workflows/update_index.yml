@@ -1,4 +1,4 @@
-name: Update INDEX.md
+name: Normalize PDFs and Update Index
 
 on:
   push:
@@ -7,22 +7,46 @@ on:
       - "**/*.pdf"
 
 jobs:
-  update-index:
+  normalize:
+    if: github.actor != 'github-actions[bot]'
     runs-on: ubuntu-latest
     permissions:
       contents: write
+      models: read
     steps:
       - uses: actions/checkout@v4
+        with:
+          fetch-depth: 2  # needed to diff HEAD~1 for newly added files
 
       - uses: actions/setup-python@v5
         with:
           python-version: "3.12"
 
-      - name: Regenerate INDEX.md
+      - name: Install Python dependencies
+        run: pip install --quiet pypdf openai
+
+      - name: AI-rename newly added PDFs
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          # Find PDFs that were Added (not modified/deleted) in this push
+          NEW_PDFS=$(git diff --name-only --diff-filter=A HEAD~1 HEAD -- '*.pdf' 2>/dev/null || true)
+          if [ -n "$NEW_PDFS" ]; then
+            echo "New PDFs detected:"
+            echo "$NEW_PDFS"
+            # Use mapfile to safely handle filenames that may contain spaces
+            mapfile -t NEW_PDF_ARRAY <<< "$NEW_PDFS"
+            python scripts/rename_pdfs.py "${NEW_PDF_ARRAY[@]}"
+          else
+            echo "No new PDFs in this push — skipping rename step."
+          fi
+
+      - name: Regenerate INDEX.md and patch README count
         run: python scripts/generate_index.py
 
-      - name: Commit if changed
+      - name: Commit all changes
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
-          git diff --quiet INDEX.md || (git add INDEX.md && git commit -m "docs: auto-update INDEX.md" && git push)
+          git add -A
+          git diff --cached --quiet || (git commit -m "docs: auto-rename PDFs and update INDEX.md" && git push)
