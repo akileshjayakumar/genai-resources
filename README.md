@@ -41,8 +41,9 @@
 ## Adding a PDF
 
 1. Drop it in the right subdirectory
-2. Push to `main` — CI auto-renames it to a clean snake_case name using AI and regenerates the index
-3. No API keys needed; everything runs on the built-in `GITHUB_TOKEN`
+2. Push to a new branch and open a pull request
+3. Once merged to `main`, CI auto-renames it to a clean snake_case name using AI and regenerates the index
+4. No API keys needed; everything runs on the built-in `GITHUB_TOKEN`
 
 To regenerate the index manually: `python scripts/generate_index.py`
 

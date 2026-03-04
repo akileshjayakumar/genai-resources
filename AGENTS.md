@@ -7,7 +7,7 @@ Curated PDF resource library — **no application source code, build system, or 
 None. Run `python scripts/generate_index.py` after adding PDFs to regenerate `INDEX.md`.
 
 ## Automation (GitHub Actions)
-Pushing any PDF to `main` triggers `.github/workflows/update_index.yml` which:
+Merging a PDF into `main` (via pull request) triggers `.github/workflows/update_index.yml` which:
 1. **AI-renames** newly added PDFs using GitHub Models (`gpt-4o-mini` via `GITHUB_TOKEN`) to produce clean, readable snake_case filenames following the conventions below.
 2. **Regenerates** `INDEX.md` and patches the PDF count in `README.md`.
 3. **Commits** all changes back to `main` as `github-actions[bot]`.
